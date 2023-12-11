@@ -1,0 +1,31 @@
+{
+  "project_info": {
+    "project_number": "444907515767",
+    "firebase_url": "https://chokemfb-default-rtdb.firebaseio.com",
+    "project_id": "chokemfb",
+    "storage_bucket": "chokemfb.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:444907515767:android:e4bd337f17309c4c163b72",
+        "android_client_info": {
+          "package_name": "com.MkGame"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwgqfN_j_zoMgSmKxJZTUMIsC7mhSa5NM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
+
