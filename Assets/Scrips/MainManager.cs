@@ -8,52 +8,55 @@ using UnityEngine;
 
 public class MainManager : MonoBehaviour
 {
-
+    public static MainManager Instance;
     public TMP_Text text_name;
-
+    public TMP_InputField input_Score;
 
     DatabaseReference databaseReference;
     FirebaseAuth auth;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
     private void Start()
     {
-        //text_name.text = FirebaseAuthManager.Instance.GetNameUser();
+       
         databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
         auth = FirebaseAuthManager.Instance.auth;
-        SaveScore(6969);
-
-        // StartCoroutine(LoadScore());
-        GetD();
     }
 
+ 
 
-    public void SaveScore(int score)
+    public void SaveScore()
     {
-        // L?y ID ng??i dùng hi?n t?i
+        string score = input_Score.text;
         string userId = auth.CurrentUser.UserId;
+        DatabaseReference scoreRef = databaseReference.Child("users").Child(userId).Child("score");
 
-        // T?o m?t ???ng d?n duy nh?t trong Realtime Database ?? l?u ?i?m s? c?a ng??i dùng
-        DatabaseReference scoreRef = databaseReference.Child("scores").Child(userId);
-
-        // L?u ?i?m s? vào Realtime Database
         scoreRef.SetValueAsync(score);
-       
 
+
+
+        GetCurrentScore();
     }
 
 
-    public void GetD()
+    
+
+    public void GetCurrentScore()
     {
-        StartCoroutine(Getcc((int ccc) =>
+        StartCoroutine(GetScore((int ccc) =>
         {
-            Debug.Log(ccc);
+
             text_name.text = ccc.ToString();
         }));
     }
-    public IEnumerator Getcc(Action<int> onCallback)
+    public IEnumerator GetScore(Action<int> onCallback)
     {
         string userId = auth.CurrentUser.UserId;
 
-        var score = databaseReference.Child("scores").Child(userId).GetValueAsync();
+        var score = databaseReference.Child("users").Child(userId).Child("score").GetValueAsync();
 
 
         yield return new WaitUntil(predicate: () => score.IsCompleted);
@@ -61,15 +64,16 @@ public class MainManager : MonoBehaviour
         if (score != null)
         {
             DataSnapshot snapshot =score.Result;
-            Debug.Log(snapshot.Value);
+            //Debug.Log(snapshot.Value);
             onCallback.Invoke(int.Parse(snapshot.Value.ToString()));
         }
     }
-   
 
-    public void GoScence(string nameScence)
+    public void LogOut()
     {
-        FirebaseAuthManager.Instance.LogOut();  
-        UnityEngine.SceneManagement.SceneManager.LoadScene(nameScence);
+        FirebaseAuthManager.Instance.LogOut();
     }
+
+ 
+
 }

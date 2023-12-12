@@ -4,10 +4,13 @@ using UnityEngine.UI;
 using Firebase;
 using Firebase.Auth;
 using TMPro;
+using Firebase.Database;
+using UnityEditor.Rendering;
 
 public class FirebaseAuthManager : MonoBehaviour
 {
     public static FirebaseAuthManager Instance;
+    DatabaseReference databaseReference;
     // Firebase variable
     [Header("Firebase")]
     public DependencyStatus dependencyStatus;
@@ -33,6 +36,7 @@ public class FirebaseAuthManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
         }
         // Check that all of the necessary dependencies for firebase are present on the system
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
@@ -42,6 +46,7 @@ public class FirebaseAuthManager : MonoBehaviour
             if (dependencyStatus == DependencyStatus.Available)
             {
                 InitializeFirebase();
+             
             }
             else
             {
@@ -50,13 +55,14 @@ public class FirebaseAuthManager : MonoBehaviour
         });
     }
 
+
     void InitializeFirebase()
     {
         //Set the default instance object
         auth = FirebaseAuth.DefaultInstance;
 
         auth.StateChanged += AuthStateChanged;
-        AuthStateChanged(this, null);
+        //AuthStateChanged(this, null);
     }
 
     // Track state changes of the auth object.
@@ -72,10 +78,11 @@ public class FirebaseAuthManager : MonoBehaviour
             }
 
             user = auth.CurrentUser;
-
+            //Debug.Log(user.UserId);
             if (signedIn)
             {
                 Debug.Log("Signed in " + user.UserId);
+                
             }
         }
     }
@@ -128,7 +135,6 @@ public class FirebaseAuthManager : MonoBehaviour
 
             Debug.LogFormat("{0} You Are Successfully Logged In", user.DisplayName);
 
-            // References.userName = user.DisplayName;
             UIManager.Instance.OpenPlayPanel();
         }
     }
@@ -233,6 +239,7 @@ public class FirebaseAuthManager : MonoBehaviour
                 }
                 else
                 {
+                    CreatUser(user.DisplayName, 0);
                     Debug.Log("Registration Sucessful Welcome " + user.DisplayName);
                     UIManager.Instance.OpenLoginPanel();
                 }
@@ -246,9 +253,16 @@ public class FirebaseAuthManager : MonoBehaviour
         if (auth != null && user != null)
         {
             auth.SignOut();
-            //UIManager.Instance.OpenLoginPanel();
+            GoScence("Login"); 
         }
     }
+
+    IEnumerator GoHome()
+    {
+        yield return new WaitForSeconds(0.5f);
+        GoScence("Login");
+    }
+
 
     public void GoScence(string nameScence)
     {
@@ -258,4 +272,13 @@ public class FirebaseAuthManager : MonoBehaviour
     {
         return user.DisplayName;
     }
+    public void CreatUser( string name, int score)
+    {
+        User newUser = new User(name, score);
+        string json = JsonUtility.ToJson(newUser);
+       
+        databaseReference.Child("users").Child(user.UserId).SetRawJsonValueAsync(json);
+      
+    }
+
 }
