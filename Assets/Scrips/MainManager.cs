@@ -8,22 +8,21 @@ using UnityEngine;
 
 public class MainManager : MonoBehaviour
 {
-    public static MainManager Instance;
+
     public TMP_Text text_name;
     public TMP_InputField input_Score;
 
     DatabaseReference databaseReference;
-    FirebaseAuth auth;
+    FirebaseUser user;
 
-    private void Awake()
-    {
-        Instance = this;
-    }
+   
     private void Start()
     {
        
         databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
-        auth = FirebaseAuthManager.Instance.auth;
+        user = FirebaseManager.Instance.user;
+
+        Debug.Log(FirebaseManager.Instance.user+"/"+ FirebaseManager.Instance.auth);
     }
 
  
@@ -31,7 +30,7 @@ public class MainManager : MonoBehaviour
     public void SaveScore()
     {
         string score = input_Score.text;
-        string userId = auth.CurrentUser.UserId;
+        string userId = user.UserId;
         DatabaseReference scoreRef = databaseReference.Child("users").Child(userId).Child("score");
 
         scoreRef.SetValueAsync(score);
@@ -54,7 +53,7 @@ public class MainManager : MonoBehaviour
     }
     public IEnumerator GetScore(Action<int> onCallback)
     {
-        string userId = auth.CurrentUser.UserId;
+        string userId = user.UserId;
 
         var score = databaseReference.Child("users").Child(userId).Child("score").GetValueAsync();
 

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class UIManager : MonoBehaviour
@@ -14,6 +15,12 @@ public class UIManager : MonoBehaviour
 
     [SerializeField]
     private GameObject playGamePanel;
+
+
+    [SerializeField]
+    private GameObject notifiPanel;
+    [SerializeField]
+    private TMP_Text text_Notifi;
 
     private void Awake()
     {
@@ -49,10 +56,33 @@ public class UIManager : MonoBehaviour
         
     }
 
+
+
+    public void OpenNotiPanell(string message)
+    {
+        text_Notifi.text = message;
+
+        StartCoroutine(ShowMessageAsync());
+    }
+
+    private IEnumerator ShowMessageAsync()
+    {
+        StatusNotiPanel(true);
+        yield return new WaitForSeconds(3f);
+        StatusNotiPanel(false);
+    }
+    public void StatusNotiPanel(bool status)
+    {
+        notifiPanel.gameObject.SetActive(status);
+    }
+
     private void OffAllPanel()
     {
         registrationPanel.SetActive(false);
         loginPanel.SetActive(false);
         playGamePanel.SetActive(false);
     }
+
+
+
 }

@@ -12,10 +12,10 @@ public class FirebaseAuthManager : MonoBehaviour
     public static FirebaseAuthManager Instance;
     DatabaseReference databaseReference;
     // Firebase variable
-    [Header("Firebase")]
+   /* [Header("Firebase")]
     public DependencyStatus dependencyStatus;
     public FirebaseAuth auth;
-    public FirebaseUser user;
+    public FirebaseUser user;*/
 
     // Login Variables
     [Space]
@@ -41,16 +41,16 @@ public class FirebaseAuthManager : MonoBehaviour
         // Check that all of the necessary dependencies for firebase are present on the system
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
         {
-            dependencyStatus = task.Result;
-
-            if (dependencyStatus == DependencyStatus.Available)
+            FirebaseManager.Instance.dependencyStatus = task.Result;
+ 
+            if (FirebaseManager.Instance.dependencyStatus == DependencyStatus.Available)
             {
                 InitializeFirebase();
              
             }
             else
             {
-                Debug.LogError("Could not resolve all firebase dependencies: " + dependencyStatus);
+                Debug.LogError("Could not resolve all firebase dependencies: " + FirebaseManager.Instance.dependencyStatus);
             }
         });
     }
@@ -59,32 +59,38 @@ public class FirebaseAuthManager : MonoBehaviour
     void InitializeFirebase()
     {
         //Set the default instance object
-        auth = FirebaseAuth.DefaultInstance;
+        FirebaseManager.Instance.auth = FirebaseAuth.DefaultInstance;
 
-        auth.StateChanged += AuthStateChanged;
+        FirebaseManager.Instance.auth.StateChanged += AuthStateChanged;
         //AuthStateChanged(this, null);
     }
 
     // Track state changes of the auth object.
     void AuthStateChanged(object sender, System.EventArgs eventArgs)
     {
-        if (auth.CurrentUser != user)
+        if (FirebaseManager.Instance.auth.CurrentUser != FirebaseManager.Instance.user)
         {
-            bool signedIn = user != auth.CurrentUser && auth.CurrentUser != null;
+            bool signedIn = FirebaseManager.Instance.user != FirebaseManager.Instance.auth.CurrentUser && FirebaseManager.Instance.auth.CurrentUser != null;
 
-            if (!signedIn && user != null)
+            if (!signedIn && FirebaseManager.Instance.user != null)
             {
-                Debug.Log("Signed out " + user.UserId);
+                Debug.Log("Signed out " + FirebaseManager.Instance.user.UserId);
             }
 
-            user = auth.CurrentUser;
+            FirebaseManager.Instance.user = FirebaseManager.Instance.auth.CurrentUser;
             //Debug.Log(user.UserId);
             if (signedIn)
             {
-                Debug.Log("Signed in " + user.UserId);
+                Debug.Log("Signed in " + FirebaseManager.Instance.user.UserId);
                 
             }
         }
+    }
+
+    void OnDestroy()
+    {
+        FirebaseManager.Instance.auth.StateChanged -= AuthStateChanged;
+       // FirebaseManager.Instance.auth = null;
     }
 
     public void Login()
@@ -94,7 +100,7 @@ public class FirebaseAuthManager : MonoBehaviour
 
     private IEnumerator LoginAsync(string email, string password)
     {
-        var loginTask = auth.SignInWithEmailAndPasswordAsync(email, password);
+        var loginTask = FirebaseManager.Instance.auth.SignInWithEmailAndPasswordAsync(email, password);
 
         yield return new WaitUntil(() => loginTask.IsCompleted);
 
@@ -106,15 +112,12 @@ public class FirebaseAuthManager : MonoBehaviour
             AuthError authError = (AuthError)firebaseException.ErrorCode;
 
 
-            string failedMessage = "Login Failed! Because ";
+            string failedMessage = "";
 
             switch (authError)
             {
                 case AuthError.InvalidEmail:
                     failedMessage += "Email is invalid";
-                    break;
-                case AuthError.WrongPassword:
-                    failedMessage += "Wrong Password";
                     break;
                 case AuthError.MissingEmail:
                     failedMessage += "Email is missing";
@@ -123,17 +126,18 @@ public class FirebaseAuthManager : MonoBehaviour
                     failedMessage += "Password is missing";
                     break;
                 default:
-                    failedMessage = "Login Failed";
+                    failedMessage += "Wrong Password";
                     break;
             }
 
+            UIManager.Instance.OpenNotiPanell(failedMessage);
             Debug.Log(failedMessage);
         }
         else
         {
-            user = loginTask.Result.User;
+            FirebaseManager.Instance.user = loginTask.Result.User;
 
-            Debug.LogFormat("{0} You Are Successfully Logged In", user.DisplayName);
+            Debug.LogFormat("{0} You Are Successfully Logged In", FirebaseManager.Instance.user.DisplayName);
 
             UIManager.Instance.OpenPlayPanel();
         }
@@ -148,30 +152,38 @@ public class FirebaseAuthManager : MonoBehaviour
     {
         if (name == "")
         {
-            Debug.LogError("User Name is empty");
+            UIManager.Instance.OpenNotiPanell("User Name is empty");
+  
         }
         else if (email == "")
         {
-            Debug.LogError("email field is empty");
+            UIManager.Instance.OpenNotiPanell("Email field is empty");
+         
+        }
+        else if (password.Length <6)
+        {
+            UIManager.Instance.OpenNotiPanell("Lenght password longer 6 chars");
+
         }
         else if (passwordRegisterField.text != confirmPasswordRegisterField.text)
         {
-            Debug.LogError("Password does not match");
+            UIManager.Instance.OpenNotiPanell("Password not match");
         }
         else
         {
-            var registerTask = auth.CreateUserWithEmailAndPasswordAsync(email, password);
+            var registerTask = FirebaseManager.Instance.auth.CreateUserWithEmailAndPasswordAsync(email, password);
 
             yield return new WaitUntil(() => registerTask.IsCompleted);
 
             if (registerTask.Exception != null)
             {
-                Debug.LogError(registerTask.Exception);
+                //UIManager.Instance.OpenNotiPanell(registerTask.Exception.ToString());
+                //Debug.LogError(registerTask.Exception);
 
                 FirebaseException firebaseException = registerTask.Exception.GetBaseException() as FirebaseException;
                 AuthError authError = (AuthError)firebaseException.ErrorCode;
 
-                string failedMessage = "Registration Failed! Becuase ";
+                string failedMessage = "";
                 switch (authError)
                 {
                     case AuthError.InvalidEmail:
@@ -187,27 +199,27 @@ public class FirebaseAuthManager : MonoBehaviour
                         failedMessage += "Password is missing";
                         break;
                     default:
-                        failedMessage = "Registration Failed";
+                        failedMessage = "Email has been used";
                         break;
                 }
-
-                Debug.Log(failedMessage);
+                UIManager.Instance.OpenNotiPanell(failedMessage);
+               // Debug.Log(failedMessage);
             }
             else
             {
                 // Get The User After Registration Success
-                user = registerTask.Result.User;
+                FirebaseManager.Instance.user = registerTask.Result.User;
 
                 UserProfile userProfile = new UserProfile { DisplayName = name };
 
-                var updateProfileTask = user.UpdateUserProfileAsync(userProfile);
+                var updateProfileTask = FirebaseManager.Instance.user.UpdateUserProfileAsync(userProfile);
 
                 yield return new WaitUntil(() => updateProfileTask.IsCompleted);
 
                 if (updateProfileTask.Exception != null)
                 {
                     // Delete the user if user update failed
-                    user.DeleteAsync();
+                    FirebaseManager.Instance.user.DeleteAsync();
 
                     Debug.LogError(updateProfileTask.Exception);
 
@@ -239,9 +251,10 @@ public class FirebaseAuthManager : MonoBehaviour
                 }
                 else
                 {
-                    CreatUser(user.DisplayName, 0);
-                    Debug.Log("Registration Sucessful Welcome " + user.DisplayName);
+                    CreatUser(FirebaseManager.Instance.user.DisplayName, 0);
+                    Debug.Log("Registration Sucessful Welcome " + FirebaseManager.Instance.user.DisplayName);
                     UIManager.Instance.OpenLoginPanel();
+
                 }
             }
         }
@@ -250,9 +263,10 @@ public class FirebaseAuthManager : MonoBehaviour
 
     public void LogOut()
     {
-        if (auth != null && user != null)
+        if (FirebaseManager.Instance.auth != null && FirebaseManager.Instance.user != null)
         {
-            auth.SignOut();
+            Debug.Log("bhwrethwrt");
+            FirebaseManager.Instance.auth.SignOut();
             GoScence("Login"); 
         }
     }
@@ -270,14 +284,14 @@ public class FirebaseAuthManager : MonoBehaviour
     }
     public string GetNameUser()
     {
-        return user.DisplayName;
+        return FirebaseManager.Instance.user.DisplayName;
     }
     public void CreatUser( string name, int score)
     {
         User newUser = new User(name, score);
         string json = JsonUtility.ToJson(newUser);
        
-        databaseReference.Child("users").Child(user.UserId).SetRawJsonValueAsync(json);
+        databaseReference.Child("users").Child(FirebaseManager.Instance.user.UserId).SetRawJsonValueAsync(json);
       
     }
 
