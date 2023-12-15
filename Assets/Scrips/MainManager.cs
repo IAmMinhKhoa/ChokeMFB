@@ -6,7 +6,9 @@ using Firebase.Auth;
 using Firebase.Database;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
+using static UnityEngine.Application;
 
 public class MainManager : MonoBehaviour
 {
@@ -17,6 +19,12 @@ public class MainManager : MonoBehaviour
     [SerializeField] private Button btn_Spin;
     [SerializeField] private PickerWheel pickerWheel;
 
+    [SerializeField] private GameObject parent_PanelListUser;
+    [SerializeField] private GameObject child_TextUser;
+
+
+    
+
     int currentScore = 0;
     private void Start()
     {
@@ -24,7 +32,7 @@ public class MainManager : MonoBehaviour
         user = FirebaseManager.Instance.user;
 
         GetCurrentScore();
-
+        GetAllCurrentUser();
         btn_Spin.onClick.AddListener(() =>
         {
             btn_Spin.interactable=false;
@@ -89,6 +97,51 @@ public class MainManager : MonoBehaviour
     {
         text_Score.text = "Current Score : "+currentScore.ToString();
     }
+
+    public void GetAllCurrentUser()
+    {
+        StartCoroutine(GetAllUsers((List<User> ListAllUser) =>
+        {
+
+            foreach (User Temp_User in ListAllUser)
+            {
+                Debug.Log("User: " + Temp_User.name + " - Score: " + Temp_User.score);
+
+                GameObject instantiatedChild = Instantiate(child_TextUser, parent_PanelListUser.transform);
+                instantiatedChild.GetComponent<TMP_Text>().text = Temp_User.name + " : " + Temp_User.score;
+            }
+        }));
+       
+       
+    }
+    private IEnumerator GetAllUsers(Action<List<User>> onCallback)
+    {
+        var allUser = databaseReference.Child("users").GetValueAsync();
+        yield return new WaitUntil(() => allUser.IsCompleted);
+        if (allUser.Exception != null)
+        {
+            Debug.LogWarning("Failed to retrieve : " + allUser.Exception);
+            yield break;
+        }
+        List<User> userList = new List<User>();
+        DataSnapshot snapshot = allUser.Result;
+        foreach (DataSnapshot userSnapshot in snapshot.Children)
+        {
+            Dictionary<string, object> userData = (Dictionary<string, object>)userSnapshot.Value;
+            string username = userData["name"].ToString();
+            int score = int.Parse(userData["score"].ToString());
+            User tempUser = new User(username, score);
+            userList.Add(tempUser);
+
+        }
+       
+        onCallback.Invoke(userList);
+        
+    }
+
+
+
+
 
     public void LogOut()
     {
