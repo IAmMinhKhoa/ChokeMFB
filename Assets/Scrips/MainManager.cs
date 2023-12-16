@@ -20,15 +20,19 @@ public class MainManager : MonoBehaviour
     [SerializeField] private PickerWheel pickerWheel;
 
     [SerializeField] private GameObject parent_PanelListUser;
-    [SerializeField] private GameObject child_TextUser;
+    [SerializeField] private GameObject child_PanelUser;
 
 
-    
+    public List<User> ListAllUser =new List<User>();
 
     int currentScore = 0;
+    private void Awake()
+    {
+        databaseReference = FirebaseManager.Instance.databaseReference;
+    }
     private void Start()
     {
-        databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
+       
         user = FirebaseManager.Instance.user;
 
         GetCurrentScore();
@@ -59,7 +63,12 @@ public class MainManager : MonoBehaviour
 
     private void Update()
     {
+        //Debug.Log(ListAllUser.Count);
         ChangeScoreText();
+    }
+    private void FixedUpdate()
+    {
+        GetAllCurrentUser();
     }
 
     public void GetCurrentScore()
@@ -100,15 +109,16 @@ public class MainManager : MonoBehaviour
 
     public void GetAllCurrentUser()
     {
-        StartCoroutine(GetAllUsers((List<User> ListAllUser) =>
+        StartCoroutine(GetAllUsers((List<User> ListAllUserRealTime) =>
         {
+            ListAllUser = ListAllUserRealTime;
 
-            foreach (User Temp_User in ListAllUser)
+            foreach (User Temp_User in ListAllUserRealTime)
             {
-                Debug.Log("User: " + Temp_User.name + " - Score: " + Temp_User.score);
+               // Debug.Log("User: " + Temp_User.name + " - Score: " + Temp_User.score);
 
-                GameObject instantiatedChild = Instantiate(child_TextUser, parent_PanelListUser.transform);
-                instantiatedChild.GetComponent<TMP_Text>().text = Temp_User.name + " : " + Temp_User.score;
+                GameObject instantiatedChild = Instantiate(child_PanelUser, parent_PanelListUser.transform);
+                instantiatedChild.GetComponent<PanelUser>().user= Temp_User;
             }
         }));
        
@@ -128,9 +138,10 @@ public class MainManager : MonoBehaviour
         foreach (DataSnapshot userSnapshot in snapshot.Children)
         {
             Dictionary<string, object> userData = (Dictionary<string, object>)userSnapshot.Value;
+            string id = userSnapshot.Key;
             string username = userData["name"].ToString();
             int score = int.Parse(userData["score"].ToString());
-            User tempUser = new User(username, score);
+            User tempUser = new User(id,username, score);
             userList.Add(tempUser);
 
         }
