@@ -12,7 +12,7 @@ public class PanelUser : MonoBehaviour
     DatabaseReference databaseReference;
 
     public TMP_Text text_infor;
-    public Button btn_Atk;
+
     public User user;
     private void Awake()
     {
@@ -20,9 +20,9 @@ public class PanelUser : MonoBehaviour
     }
     private void Start()
     {
-        Debug.Log(databaseReference);
+        
         text_infor.text = user.name + " : " + user.score;
-        btn_Atk.onClick.AddListener(AttackUserRealtime);
+      
     }
 
     protected void AttackUserRealtime()

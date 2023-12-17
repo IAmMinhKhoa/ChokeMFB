@@ -113,6 +113,11 @@ public class MainManager : MonoBehaviour
         {
             ListAllUser = ListAllUserRealTime;
 
+            foreach (Transform child in parent_PanelListUser.transform)
+            {
+                Destroy(child.gameObject);
+            }
+
             foreach (User Temp_User in ListAllUserRealTime)
             {
                // Debug.Log("User: " + Temp_User.name + " - Score: " + Temp_User.score);
