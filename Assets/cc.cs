@@ -4,37 +4,27 @@ using UnityEngine;
 
 public class cc : MonoBehaviour
 {
-    int a = 0;
+    /* private void OnParticleCollision(GameObject other)
+     {
+         Debug.Log("hêh");
+     }*/
+    private void Start()
+    {
+        //Application.targetFrameRate = 30;
+    }
+    float hehe = 2;
     float time = 0;
-    // Start is called before the first frame update
-    private void Awake()
+    int count = 0;
+    private void Update()
     {
-        Debug.Log("awake");
-    }
-    private void OnEnable()
-    {
-        Debug.Log("OnEnable");
-    }
-    void Start()
-    {
-        Debug.Log("start");
-        Application.targetFrameRate = 120;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-      
-    }
-    private void FixedUpdate()
-    {
-        time += Time.deltaTime;
-        if (time < 1)
+         time += Time.deltaTime;
+        count += 1;
+        if (time > hehe)
         {
-            a = a + 1;
-             Debug.Log(a);
+            time = 0;
+            Debug.Log(count);
+            count = 0;
+            
         }
-       // Debug.Log(Time.fixedDeltaTime);
     }
 }
